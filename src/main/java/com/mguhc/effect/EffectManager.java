@@ -70,6 +70,12 @@ public class EffectManager implements Listener {
                 double damageMultiplier = 1 + (percentage / 100.0);
                 event.setDamage(event.getDamage() * damageMultiplier);
             }
+            if (weaknessEffects.containsKey(attacker)) {
+                int percentage = weaknessEffects.get(attacker);
+                // Appliquer l'effet de force
+                double damageMultiplier = 1 + (percentage / 100.0);
+                event.setDamage(event.getDamage() / damageMultiplier);
+            }
         }
         if(event.getEntity() instanceof Player) {
         	Player victim = (Player) event.getEntity();
@@ -80,15 +86,6 @@ public class EffectManager implements Listener {
                 damage -= damageReduction;
                 event.setDamage(damage);
             }
-        }
-    }
-
-    // Méthode pour gérer la résistance
-    public void applyResistance(Player player, double damage) {
-        if (resistanceEffects.containsKey(player)) {
-            int percentage = resistanceEffects.get(player);
-            double damageReduction = damage * (percentage / 100.0);
-            damage -= damageReduction;
         }
     }
     
@@ -109,9 +106,26 @@ public class EffectManager implements Listener {
             if (resistanceEffects.containsKey(player)) {
                 message.append("Résistance : ").append(resistanceEffects.get(player)).append("%\n");
             }
+            if(weaknessEffects.containsKey(player)) {
+                message.append("Weakness : ").append(weaknessEffects.get(player)).append("%\n");
+            }
 
             player.sendMessage(message.toString());
             event.setCancelled(true); // Annuler la commande pour éviter l'affichage par défaut
+        }
+    }
+
+    public int getEffect(Player player, PotionEffectType effect) {
+        if(effect.equals(PotionEffectType.SPEED) && speedEffects.containsKey(player)) {
+            return speedEffects.get(player);
+        } else if(effect.equals(PotionEffectType.INCREASE_DAMAGE) && strengthEffects.containsKey(player)) {
+            return strengthEffects.get(player);
+        } else if(effect.equals(PotionEffectType.DAMAGE_RESISTANCE) && resistanceEffects.containsKey(player)) {
+            return resistanceEffects.get(player);
+        } else if(effect.equals(PotionEffectType.WEAKNESS) && weaknessEffects.containsKey(player)) {
+            return weaknessEffects.get(player);
+        } else {
+            return 0; // Retourne 0 si aucun effet n'est trouvé
         }
     }
 }
