@@ -31,7 +31,7 @@ public class UhcAPI extends JavaPlugin implements Listener {
         instance = this;
         playermanager = new PlayerManager();
         uhcgame = new UhcGame();
-        effectManager = new EffectManager();
+        effectManager = new EffectManager();  
         roleManager = new RoleManager();
         scenariomanager = new ScenarioManager();
         cooldownManager = new CooldownManager();
