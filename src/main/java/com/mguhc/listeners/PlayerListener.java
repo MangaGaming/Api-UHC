@@ -70,6 +70,7 @@ public class PlayerListener implements Listener {
             for (PotionEffect effect : player.getActivePotionEffects()) {
                 player.removePotionEffect(effect.getType());
             }
+            UhcAPI.getInstance().getEffectManager().removeEffects(player);
             player.setGameMode(GameMode.ADVENTURE);
             player.teleport(new Location(world, 0, 201, 0));
             if(roleManager.getRole(playerManager.getPlayer(player)) != null) {
@@ -78,7 +79,7 @@ public class PlayerListener implements Listener {
             playerManager.addPlayer(player);
             
             // Vérifier si le joueur a la permission ou est op
-            if (player.hasPermission("api.host") || player.isOp() && currentphase.getName() == "Waiting") {
+            if (player.hasPermission("api.host") || player.isOp() && currentphase.getName().equals("Waiting")) {
                 // Créer une étoile du Nether nommée "config"
                 ItemStack netherStar = new ItemStack(Material.NETHER_STAR);
                 ItemMeta meta = netherStar.getItemMeta();
@@ -213,11 +214,11 @@ public class PlayerListener implements Listener {
             
             if(clickedItem != null && clickedItem.getType() == Material.DIAMOND_SWORD && 
                clickedItem.getItemMeta().getDisplayName().equals(ChatColor.GREEN + "Mode Mettup")) {
-            	if (uhcgame.getMettup() == true) {
+            	if (uhcgame.getMettup()) {
             		uhcgame.setMettup(false);
             		player.sendMessage("Meetup Désactivé");
             	}
-            	else if (uhcgame.getMettup() == false) {
+            	else if (!uhcgame.getMettup()) {
             		uhcgame.setMettup(true);
             		player.sendMessage("Meetup Activé");
             	}
