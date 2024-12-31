@@ -12,11 +12,17 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.potion.PotionEffectType;
 
 public class EffectManager implements Listener {
-    private static final float MAX_WALK_SPEED = 0.2f; // Maximum allowed walk speed
-    private Map<Player, Integer> speedEffects = new HashMap<>();
-    private Map<Player, Integer> strengthEffects = new HashMap<>();
-    private Map<Player, Integer> resistanceEffects = new HashMap<>();
-    private Map<Player, Integer> weaknessEffects = new HashMap<>();
+    private Map<Player, Integer> speedEffects;
+    private Map<Player, Integer> strengthEffects;
+    private Map<Player, Integer> resistanceEffects;
+    private Map<Player, Integer> weaknessEffects;
+
+    public EffectManager() {
+        this.speedEffects = new HashMap<>();
+        this.strengthEffects = new HashMap<>();
+        this.resistanceEffects = new HashMap<>();
+        this.weaknessEffects = new HashMap<>();
+    }
 
     // Method to apply a speed effect
     public void setSpeed(Player player, int percentage) {
@@ -50,6 +56,13 @@ public class EffectManager implements Listener {
         }
     }
 
+    public void removeEffects(Player player) {
+        speedEffects.remove(player);
+        strengthEffects.remove(player);
+        resistanceEffects.remove(player);
+        weaknessEffects.remove(player);
+    }
+
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
@@ -62,33 +75,38 @@ public class EffectManager implements Listener {
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player) {
             Player attacker = (Player) event.getDamager();
+            double originalDamage = event.getDamage();
+
+            // Appliquer l'effet de force
             if (strengthEffects.containsKey(attacker)) {
                 int percentage = strengthEffects.get(attacker);
-                // Apply the strength effect
                 double damageMultiplier = 1 + (percentage / 100.0);
-                event.setDamage(event.getDamage() * damageMultiplier);
+                originalDamage *= damageMultiplier;
             }
+
+            // Appliquer l'effet de faiblesse
             if (weaknessEffects.containsKey(attacker)) {
                 int percentage = weaknessEffects.get(attacker);
-                // Apply the weakness effect
-                double damageMultiplier = 1 + (percentage / 100.0);
-                event.setDamage(event.getDamage() / damageMultiplier);
+                originalDamage *= (100 - percentage) / 100.0;
             }
+
+            event.setDamage(originalDamage);
         }
+
         if (event.getEntity() instanceof Player) {
             Player victim = (Player) event.getEntity();
+            double damage = event.getDamage();
+
+            // Appliquer l'effet de résistance
             if (resistanceEffects.containsKey(victim)) {
-                double damage = event.getDamage();
                 int percentage = resistanceEffects.get(victim);
                 double damageReduction = damage * (percentage / 100.0);
                 damage -= damageReduction;
-
-                // Ensure damage does not go below zero
-                if (damage < 0) {
-                    damage = 0;
-                }
-                event.setDamage(damage);
             }
+
+            // S'assurer que les dégâts ne tombent pas en dessous de zéro
+            damage = Math.max(0, damage);
+            event.setDamage(damage);
         }
     }
 
