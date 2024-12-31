@@ -172,6 +172,7 @@ public class RoleManager {
     }
 
     public void setCamp(UhcPlayer player, Camp camp) {
+        playerCamps.remove(player);
         playerCamps.put(player, camp);
     }
 
