@@ -31,7 +31,8 @@ public class ModItemListener implements Listener {
         if(item == null || !item.hasItemMeta() || item.getItemMeta() == null) {
         	return;
         }
-        if(item.getItemMeta().getDisplayName().equals(ChatColor.GREEN + "Vanish")) {
+        if(item.getItemMeta().hasDisplayName() &&
+            item.getItemMeta().getDisplayName().equals(ChatColor.GREEN + "Vanish")) {
             if(player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
                 player.sendMessage(ChatColor.RED + "Vous avez désactivé la Vanish");
                 player.removePotionEffect(PotionEffectType.INVISIBILITY);

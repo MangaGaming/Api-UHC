@@ -78,7 +78,7 @@ public class PlayerListener implements Listener {
             }
             playerManager.addPlayer(player);
             
-            // Vérifier si le joueur a la permission ou est op
+            // Vérifier si le joueur a la permission avec laquelle est op
             if (player.hasPermission("api.host") || player.isOp() && currentphase.getName().equals("Waiting")) {
                 // Créer une étoile du Nether nommée "config"
                 ItemStack netherStar = new ItemStack(Material.NETHER_STAR);
@@ -94,6 +94,7 @@ public class PlayerListener implements Listener {
                 	giveModItems(player);
             	}
             }
+            UhcAPI.getInstance().getEffectManager().setSpeed(player, 100);
         }
     }
     
@@ -101,7 +102,7 @@ public class PlayerListener implements Listener {
     private void OnLeave(PlayerQuitEvent event) {
     	Player player = event.getPlayer();
     	if(UhcAPI.getInstance().getUhcGame().getCurrentPhase().getName().equals("Waiting")) {
-    		UhcAPI.getInstance().getPlayerManager().getPlayers().remove(UhcAPI.getInstance().getPlayerManager().getPlayer(player), player);
+    		UhcAPI.getInstance().getPlayerManager().getPlayers().remove(player);
     	}
     }
     
@@ -373,7 +374,7 @@ public class PlayerListener implements Listener {
             ItemStack roleItem = new ItemStack(Material.PAPER); // Utilisez un item approprié
             ItemMeta meta = roleItem.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(role.getName()); // Assurez-vous que UhcRole a une méthode getName()
+                meta.setDisplayName(role.getName()); // Assurez-vous que UhcRole à une méthode getName()
                 List<String> lore = new ArrayList<>();
                 lore.add(ChatColor.GRAY + "Cliquez pour " + (UhcAPI.getInstance().getRoleManager().getActiveRoles().contains(role) ? "désactiver" : "activer"));
                 meta.setLore(lore);
@@ -401,6 +402,7 @@ public class PlayerListener implements Listener {
                 	User user = luckPerms.getUserManager().getUser (selectedPlayer.getUniqueId());
                     if (selectedPlayer.hasPermission("api.host")) {
                     	// Retirer la permission api.mod
+                        assert user != null;
                         user.data().remove(Node.builder("api.host").build());
                         luckPerms.getUserManager().saveUser (user); // Sauvegarder l'utilisateur
 
@@ -535,7 +537,7 @@ public class PlayerListener implements Listener {
     }
     
     @EventHandler
-    private void OnScenariInventoryoClick(InventoryClickEvent event) {
+    private void OnScenarioInventoryClick(InventoryClickEvent event) {
     	if (event.getView().getTitle().equals(ChatColor.GREEN + "Gérer les Scénarios")) {
             event.setCancelled(true); // Annuler l'événement pour éviter de déplacer les items
             

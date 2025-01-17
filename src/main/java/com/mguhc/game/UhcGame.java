@@ -21,13 +21,11 @@ import com.mguhc.roles.RoleManager;
 import com.mguhc.roles.UhcRole;
 
 public class UhcGame {
-    private RoleManager roleManager;
     private GamePhase currentPhase; // Champ pour la phase actuelle
     private int timePassed;
     private int borderTimer;
     private int borderSize;
 	private boolean ismettup = false;
-    private Map<Player, UhcPlayer> players;
 
 
     public UhcGame() {
@@ -35,8 +33,8 @@ public class UhcGame {
     }
 
     public void startGame() {
-        roleManager = UhcAPI.getInstance().getRoleManager();
-        players = UhcAPI.getInstance().getPlayerManager().getPlayers();
+        RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
+        Map<Player, UhcPlayer> players = UhcAPI.getInstance().getPlayerManager().getPlayers();
         if (roleManager.getActiveRoles().size() != players.size()) {
             Bukkit.broadcastMessage("[UHC] Il vous faut autant de joueur que de rôles pour lancer la partie");
             return;
@@ -55,6 +53,10 @@ public class UhcGame {
                 PotionEffectType potiontype = potion.getType();
                 player.removePotionEffect(potiontype);
             }
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setSaturation(20);
+            UhcAPI.getInstance().getEffectManager().removeEffects(player);
             // Téléportation à un endroit aléatoire autour de (0, 0)
             teleportToRandomLocation(player);
         }
@@ -96,9 +98,7 @@ public class UhcGame {
                     if (playersInRange.isEmpty()) {
                         // Téléporter les joueurs les plus proches de (0, 0)
                         for (Player player : Bukkit.getOnlinePlayers()) {
-                            if (!playersInRange.contains(player)) {
-                                player.teleport(new Location(player.getWorld(), 0, 80, 0)); // Téléportation à une position spécifique
-                            }
+                            player.teleport(new Location(player.getWorld(), 0, 80, 0)); // Téléportation à une position spécifique
                         }
                     }
                 }
@@ -106,11 +106,7 @@ public class UhcGame {
             }
         }.runTaskTimer(UhcAPI.getInstance(), 0, 20); // Exécute toutes les secondes
 
-        if (borderSize < 1000 || borderSize == 0) {
-            Bukkit.getWorld("world").getWorldBorder().setSize(1000);
-        } else {
-            Bukkit.getWorld("world").getWorldBorder().setSize(borderSize);
-        }
+        Bukkit.getWorld("world").getWorldBorder().setSize(Math.max(borderSize, 1000));
         Bukkit.getServer().getPluginManager().callEvent(new UhcStartEvent());
     }
     private void teleportToRandomLocation(Player player) {

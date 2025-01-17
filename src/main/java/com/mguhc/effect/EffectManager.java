@@ -3,10 +3,13 @@ package com.mguhc.effect;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.potion.PotionEffectType;
@@ -16,12 +19,14 @@ public class EffectManager implements Listener {
     private Map<Player, Integer> strengthEffects;
     private Map<Player, Integer> resistanceEffects;
     private Map<Player, Integer> weaknessEffects;
+    private Map<Player, Boolean> noFallActive;
 
     public EffectManager() {
         this.speedEffects = new HashMap<>();
         this.strengthEffects = new HashMap<>();
         this.resistanceEffects = new HashMap<>();
         this.weaknessEffects = new HashMap<>();
+        this.noFallActive = new HashMap<>();
     }
 
     // Method to apply a speed effect
@@ -41,6 +46,10 @@ public class EffectManager implements Listener {
 
     public void setWeakness(Player player, int percentage) {
         weaknessEffects.put(player, percentage);
+    }
+
+    public void setNoFall(Player player, boolean b) {
+        noFallActive.put(player, b);
     }
 
     // Method to remove an effect
@@ -67,7 +76,10 @@ public class EffectManager implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         if (speedEffects.containsKey(player)) {
-            player.setWalkSpeed((float) 0.2 * speedEffects.get(player) / 100);
+            player.setWalkSpeed((float) 0.2 * (1 + (float) speedEffects.get(player) / 100));
+        }
+        else {
+            player.setWalkSpeed(0.2f);
         }
     }
 
@@ -111,27 +123,31 @@ public class EffectManager implements Listener {
     }
 
     @EventHandler
+    private void OnDamage(EntityDamageEvent event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof Player) {
+            Player player = (Player) entity;
+            if(noFallActive.getOrDefault(player, false) &&
+               event.getCause().equals(EntityDamageEvent.DamageCause.FALL)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
         String command = event.getMessage();
 
         if (command.equalsIgnoreCase("/effects")) {
-            StringBuilder message = new StringBuilder("Vos effets :\n");
 
-            if (speedEffects.containsKey(player)) {
-                message.append("Vitesse : ").append(speedEffects.get(player)).append("%\n");
-            }
-            if (strengthEffects.containsKey(player)) {
-                message.append("Force : ").append(strengthEffects.get(player)).append("%\n");
-            }
-            if (resistanceEffects.containsKey(player)) {
-                message.append("Résistance : ").append(resistanceEffects.get(player)).append("%\n");
-            }
-            if (weaknessEffects.containsKey(player)) {
-                message.append("Faiblesse : ").append(weaknessEffects.get(player)).append("%\n");
-            }
+            String message = "Vos effets :\n" + "Vitesse : " + speedEffects.getOrDefault(player, 0) + "%\n" +
+                    "Force : " + strengthEffects.getOrDefault(player, 0) + "%\n" +
+                    "Résistance : " + resistanceEffects.getOrDefault(player, 0) + "%\n" +
+                    "Faiblesse : " + weaknessEffects.getOrDefault(player, 0) + "%\n";
 
-            player.sendMessage(message.toString());
+
+            player.sendMessage(message);
             event.setCancelled(true); // Cancel the command to prevent default display
         }
     }
@@ -147,6 +163,35 @@ public class EffectManager implements Listener {
             return weaknessEffects.get(player);
         } else {
             return 0; // Return 0 if no effect is found
+        }
+    }
+
+    public Map<PotionEffectType, Integer> getEffectsMap(Player player) {
+        Map<PotionEffectType, Integer> effectsMap = new HashMap<>();
+
+        effectsMap.put(PotionEffectType.SPEED, speedEffects.getOrDefault(player, 0));
+        effectsMap.put(PotionEffectType.INCREASE_DAMAGE, strengthEffects.getOrDefault(player, 0));
+        effectsMap.put(PotionEffectType.DAMAGE_RESISTANCE, resistanceEffects.getOrDefault(player, 0));
+        effectsMap.put(PotionEffectType.WEAKNESS, weaknessEffects.getOrDefault(player, 0));
+
+        return effectsMap;
+    }
+
+    public void setEffects(Player player, Map<PotionEffectType, Integer> effects) {
+        for (Map.Entry<PotionEffectType, Integer> entry : effects.entrySet()) {
+            PotionEffectType effectType = entry.getKey();
+            int percentage = entry.getValue();
+
+            // Appliquer l'effet en fonction de son type
+            if (effectType.equals(PotionEffectType.SPEED)) {
+                setSpeed(player, percentage);
+            } if (effectType.equals(PotionEffectType.INCREASE_DAMAGE)) {
+                setStrength(player, percentage);
+            } if (effectType.equals(PotionEffectType.DAMAGE_RESISTANCE)) {
+                setResistance(player, percentage);
+            } if (effectType.equals(PotionEffectType.WEAKNESS)) {
+                setWeakness(player, percentage);
+            }
         }
     }
 }

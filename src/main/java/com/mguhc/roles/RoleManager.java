@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack; // Assurez-vous d'importer la classe ItemStack
-import org.bukkit.potion.PotionEffectType;
 
-import com.mguhc.UhcAPI;
-import com.mguhc.effect.EffectManager; // Importer l'EffectManager
 import com.mguhc.player.UhcPlayer;
 
 public class RoleManager {
@@ -19,19 +15,13 @@ public class RoleManager {
     private List<UhcRole> validRoles;
     private List<UhcRole> activeRoles;
     private List<Camp> camps;
-    private Map<UhcRole, List<ItemStack>> roleItems;
-    private Map<UhcRole, Map<PotionEffectType, Integer>> roleEffects;
-    private EffectManager effectManager;
 
     public RoleManager() {
-        this.effectManager = UhcAPI.getInstance().getEffectManager();
         playerRoles = new HashMap<>();
         playerCamps = new HashMap<>();
         validRoles = new ArrayList<>();
         activeRoles = new ArrayList<>();
         camps = new ArrayList<>();
-        roleItems = new HashMap<>();
-        roleEffects = new HashMap<>(); // Initialiser la Map des effets par rôle
     }
 
     public void assignRole(UhcPlayer uhc_player, UhcRole role) {
@@ -55,34 +45,6 @@ public class RoleManager {
         }
 
         player.sendMessage(role.getDescription());
-
-        // Donner les items associés au rôle
-        List<ItemStack> itemsToGive = roleItems.get(role);
-        if (itemsToGive != null) {
-            for (ItemStack item : itemsToGive) {
-                player.getInventory().addItem(item); // Ajouter l'item à l'inventaire du joueur
-            }
-        }
-        
-        Map<PotionEffectType, Integer> effects = roleEffects.get(role);
-        if(effects != null) {
-            for(Map.Entry<PotionEffectType, Integer> entry : effects.entrySet()) {
-            	PotionEffectType effect = entry.getKey();
-            	Integer percentage = entry.getValue();
-            	if(effect.equals(PotionEffectType.INCREASE_DAMAGE)) {
-            		effectManager.setStrength(player, percentage);
-            	}
-            	if(effect.equals(PotionEffectType.DAMAGE_RESISTANCE)) {
-            		effectManager.setResistance(player, percentage);
-            	}
-            	if(effect.equals(PotionEffectType.SPEED)) {
-            		effectManager.setSpeed(player, percentage);
-            	}
-            	if(effect.equals(PotionEffectType.WEAKNESS)) {
-            		effectManager.setWeakness(player, percentage);
-            	}
-            }
-        }
     }
 
     public UhcRole getRole(UhcPlayer player) {
@@ -178,19 +140,5 @@ public class RoleManager {
 
     public Camp getCamp(UhcPlayer player) {
         return playerCamps.get(player);
-    }
-
-    public void setItemToGive(String roleName, List<ItemStack> items) {
-        for (UhcRole role : validRoles) {
-            if (role.getName().equalsIgnoreCase(roleName)) {
-                roleItems.put(role, items);
-                break;
-            }
-        }
-    }
-
-    public void setEffectsToGive(String roleName, Map<PotionEffectType, Integer> effects) {
-    	UhcRole role = getUhcRole(roleName);
-    	roleEffects.put(role, effects);
     }
 }
