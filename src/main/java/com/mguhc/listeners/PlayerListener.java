@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mguhc.player.UhcPlayer;
+import com.mguhc.roles.Camp;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -15,12 +17,9 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -42,13 +41,17 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 
 public class PlayerListener implements Listener {
-    
+
+    private final PlayerManager playerManager;
+    private RoleManager roleManager;
     private UhcGame uhcgame;
     private LuckPerms luckPerms;
     private Map<Player, String> playerInputState = new HashMap<>();
     
     public PlayerListener(UhcGame uhcgame) {
         this.uhcgame = uhcgame;
+        this.roleManager = UhcAPI.getInstance().getRoleManager();
+        this.playerManager = UhcAPI.getInstance().getPlayerManager();
         this.luckPerms = LuckPermsProvider.get();
     }
 
@@ -59,8 +62,6 @@ public class PlayerListener implements Listener {
         UHCScoreboard uhcscoreboard = new UHCScoreboard();
         uhcscoreboard.createScoreboard(player);
         GamePhase currentphase = uhcgame.getCurrentPhase();
-        RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
-        PlayerManager playerManager = UhcAPI.getInstance().getPlayerManager();
         
         if (currentphase.getName().equals("Waiting")) {
             player.setMaxHealth(20);
@@ -73,6 +74,7 @@ public class PlayerListener implements Listener {
             UhcAPI.getInstance().getEffectManager().removeEffects(player);
             player.setGameMode(GameMode.ADVENTURE);
             player.teleport(new Location(world, 0, 201, 0));
+
             if(roleManager.getRole(playerManager.getPlayer(player)) != null) {
                 roleManager.removeRole(playerManager.getPlayer(player));
             }
@@ -94,23 +96,50 @@ public class PlayerListener implements Listener {
                 	giveModItems(player);
             	}
             }
-            UhcAPI.getInstance().getEffectManager().setSpeed(player, 100);
         }
     }
     
     @EventHandler
     private void OnLeave(PlayerQuitEvent event) {
     	Player player = event.getPlayer();
-    	if(UhcAPI.getInstance().getUhcGame().getCurrentPhase().getName().equals("Waiting")) {
-    		UhcAPI.getInstance().getPlayerManager().getPlayers().remove(player);
+    	if(uhcgame.getCurrentPhase().getName().equals("Waiting")) {
+    		playerManager.getPlayers().remove(player);
     	}
     }
     
     @EventHandler
     private void OnRespawn(PlayerRespawnEvent event) {
-    	if(UhcAPI.getInstance().getUhcGame().getCurrentPhase().getName().equals("Playing")) {
+    	if(uhcgame.getCurrentPhase().getName().equals("Playing")) {
     		event.getPlayer().setGameMode(GameMode.SPECTATOR);
     	}
+    }
+
+    @EventHandler
+    private void OnDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity().getPlayer();
+        if (uhcgame.getCurrentPhase().getName().equals("Playing")) {
+            Map<Player, UhcPlayer> players = playerManager.getPlayers();
+            players.remove(player); // Retirer le joueur décédé
+
+            // Vérifier si tous les joueurs restants sont dans le même camp
+            if (!players.isEmpty()) { // S'assurer qu'il reste des joueurs
+                Camp firstCamp = roleManager.getCamp(players.values().iterator().next()); // Obtenir le camp du premier joueur
+                boolean allSameCamp = true;
+
+                for (UhcPlayer uhcPlayer : players.values()) {
+                    Camp currentCamp = roleManager.getCamp(uhcPlayer);
+                    if (!currentCamp.equals(firstCamp)) {
+                        allSameCamp = false; // Si un joueur n'est pas dans le même camp, mettre à jour le drapeau
+                        break;
+                    }
+                }
+
+                // Si tous les joueurs sont dans le même camp, finir le jeu
+                if (allSameCamp) {
+                    uhcgame.finishGame(firstCamp);
+                }
+            }
+        }
     }
     
     @EventHandler
@@ -376,7 +405,7 @@ public class PlayerListener implements Listener {
             if (meta != null) {
                 meta.setDisplayName(role.getName()); // Assurez-vous que UhcRole à une méthode getName()
                 List<String> lore = new ArrayList<>();
-                lore.add(ChatColor.GRAY + "Cliquez pour " + (UhcAPI.getInstance().getRoleManager().getActiveRoles().contains(role) ? "désactiver" : "activer"));
+                lore.add(ChatColor.GRAY + "Cliquez pour " + (roleManager.getActiveRoles().contains(role) ? "désactiver" : "activer"));
                 meta.setLore(lore);
                 roleItem.setItemMeta(meta);
             }
@@ -518,7 +547,7 @@ public class PlayerListener implements Listener {
 
             if (clickedItem != null && clickedItem.getType() == Material.PAPER) {
                 String roleName = clickedItem.getItemMeta().getDisplayName();
-                UhcRole clickedRole = findRoleByName(roleName); // Méthode pour trouver le rôle par son nom
+                UhcRole clickedRole = UhcAPI.getInstance().getRoleManager().getUhcRole(roleName); // Méthode pour trouver le rôle par son nom
 
                 if (clickedRole != null) {
                     if (activeRoles.contains(clickedRole)) {
@@ -583,7 +612,7 @@ public class PlayerListener implements Listener {
     }
     
     @EventHandler
-    private void onPlayerChat(AsyncPlayerChatEvent event) {
+    private void onPlayerChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
         String message = event.getMessage();
 
@@ -612,16 +641,6 @@ public class PlayerListener implements Listener {
             }
             event.setCancelled(true); // Annuler l'événement pour éviter d'afficher le message dans le chat
         }
-    }
-
-    private UhcRole findRoleByName(String name) {
-    	List<UhcRole> validRoles = UhcAPI.getInstance().getRoleManager().getValidRoles();
-        for (UhcRole role : validRoles) {
-            if (role.getName().equals(name)) {
-                return role;
-            }
-        }
-        return null;
     }
 
     private void updateRoleItem(ItemStack item, UhcRole role) {
