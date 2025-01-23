@@ -127,7 +127,8 @@ public class EffectManager implements Listener {
         Entity entity = event.getEntity();
         if (entity instanceof Player) {
             Player player = (Player) entity;
-            if(noFallActive.getOrDefault(player, false) &&
+            if(noFallActive.containsKey(player) &&
+                noFallActive.get(player) &&
                event.getCause().equals(EntityDamageEvent.DamageCause.FALL)) {
                 event.setCancelled(true);
             }
