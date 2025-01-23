@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.mguhc.player.PlayerManager;
+import com.mguhc.roles.Camp;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -109,6 +112,7 @@ public class UhcGame {
         Bukkit.getWorld("world").getWorldBorder().setSize(Math.max(borderSize, 1000));
         Bukkit.getServer().getPluginManager().callEvent(new UhcStartEvent());
     }
+
     private void teleportToRandomLocation(Player player) {
         Random random = new Random();
         // Définir la plage de téléportation (par exemple, -100 à 100)
@@ -126,6 +130,31 @@ public class UhcGame {
 
         // Téléporter le joueur
         player.teleport(randomLocation);
+    }
+
+    public void finishGame(Camp winner) {
+        Bukkit.broadcastMessage("Le camp " + winner.getName() + " a gagné !");
+        Bukkit.reload();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.setMaxHealth(20);
+            player.setHealth(20);
+            player.setSaturation(20);
+            player.getInventory().clear();
+            for (PotionEffect effect : player.getActivePotionEffects()) {
+                player.removePotionEffect(effect.getType());
+            }
+            UhcAPI.getInstance().getEffectManager().removeEffects(player);
+            player.setGameMode(GameMode.ADVENTURE);
+            World world = player.getWorld();
+            player.teleport(new Location(world, 0, 201, 0));
+
+            RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
+            PlayerManager playerManager = UhcAPI.getInstance().getPlayerManager();
+            if(roleManager.getRole(playerManager.getPlayer(player)) != null) {
+                roleManager.removeRole(playerManager.getPlayer(player));
+            }
+            playerManager.addPlayer(player);
+        }
     }
 
     public GamePhase getCurrentPhase() {
