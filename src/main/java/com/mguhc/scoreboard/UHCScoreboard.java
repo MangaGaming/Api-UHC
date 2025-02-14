@@ -4,14 +4,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.*;
 
 import com.mguhc.UhcAPI;
 import com.mguhc.roles.UhcRole;
+
+import java.util.Map;
 
 public class UHCScoreboard {
 
@@ -19,7 +17,7 @@ public class UHCScoreboard {
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         Scoreboard scoreboard = manager.getNewScoreboard();
 
-        // Créer l'objectif du scoreboard avec le titre Mashle UHC
+        // Créer l'objectif du scoreboard avec le titre UHC
         Objective objective = scoreboard.registerNewObjective("uhc", "dummy");
         objective.setDisplayName(ChatColor.GOLD + UhcAPI.getInstance().getUhcName());
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -91,10 +89,64 @@ public class UHCScoreboard {
                 roleValue[0] = objective.getScore(getPlayerRole(player));
                 roleValue[0].setScore(-2);
 
+                updateColors(player, scoreboard);
+
                 // Rafraîchir le scoreboard du joueur
                 player.setScoreboard(scoreboard);
             }
         }.runTaskTimer(UhcAPI.getInstance(), 0, 20); // Mettre à jour toutes les 5 secondes (20 ticks par seconde)
+    }
+
+    private void updateColors(Player player, Scoreboard scoreboard) {
+        Map<Player, ChatColor> colorMap = UhcAPI.getInstance().getColorMap().get(player);
+        if (colorMap != null) {
+            for (Map.Entry<Player, ChatColor> entry : colorMap.entrySet()) {
+                Player p = entry.getKey();
+                ChatColor color = entry.getValue();
+                switch (color) {
+                    case GREEN:
+                        Team green = scoreboard.getTeam("GreenColor");
+                        if (green == null) {
+                            scoreboard.registerNewTeam("GreenColor");
+                        }
+                        if (green != null) {
+                            green.setPrefix("§a");
+                            green.addEntry(p.getName());
+                        }
+                        break;
+                    case RED:
+                        Team red = scoreboard.getTeam("RedColor");
+                        if (red == null) {
+                            scoreboard.registerNewTeam("RedColor");
+                        }
+                        if (red != null) {
+                            red.setPrefix("§c");
+                            red.addEntry(p.getName());
+                        }
+                        break;
+                    case YELLOW:
+                        Team yellow = scoreboard.getTeam("YellowColor");
+                        if (yellow == null) {
+                            scoreboard.registerNewTeam("YellowColor");
+                        }
+                        if (yellow != null) {
+                            yellow.setPrefix("§e");
+                            yellow.addEntry(p.getName());
+                        }
+                        break;
+                    case WHITE:
+                        Team white = scoreboard.getTeam("WhiteColor");
+                        if (white == null) {
+                            scoreboard.registerNewTeam("WhiteColor");
+                        }
+                        if (white != null) {
+                            white.setPrefix("§f");
+                            white.addEntry(p.getName());
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     // Méthode pour obtenir la taille de la border en tant que chaîne

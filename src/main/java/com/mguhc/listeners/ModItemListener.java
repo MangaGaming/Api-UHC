@@ -28,7 +28,7 @@ public class ModItemListener implements Listener {
         ItemStack item = event.getItem();
         Player player = event.getPlayer();
         Action action = event.getAction();
-        if(item == null || !item.hasItemMeta() || item.getItemMeta() == null) {
+        if(item == null || !item.hasItemMeta() || !(item.getItemMeta() == null) || !item.getItemMeta().hasDisplayName()) {
         	return;
         }
         if(item.getItemMeta().hasDisplayName() &&
@@ -42,10 +42,10 @@ public class ModItemListener implements Listener {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1));
             }
         }
-        if(item.getItemMeta().getDisplayName().equals(ChatColor.GOLD + "Tp")) {
+        if(item.getItemMeta().hasDisplayName() && item.getItemMeta().getDisplayName().equals(ChatColor.GOLD + "Tp")) {
             openTpInventory(player);
         }
-        if(item.getItemMeta().getDisplayName().equals(ChatColor.RED + "Warn") && (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK)) {
+        if (item.getItemMeta().getDisplayName().equals(ChatColor.RED + "Warn") && (action.equals(Action.RIGHT_CLICK_AIR) || action.equals(Action.RIGHT_CLICK_BLOCK))) {
             openWarnInventory(player);
         }
     }

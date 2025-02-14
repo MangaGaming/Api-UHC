@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mguhc.events.UhcDeathEvent;
 import com.mguhc.player.UhcPlayer;
 import com.mguhc.roles.Camp;
 import org.bukkit.Bukkit;
@@ -17,7 +18,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
@@ -106,17 +106,10 @@ public class PlayerListener implements Listener {
     		playerManager.getPlayers().remove(player);
     	}
     }
-    
-    @EventHandler
-    private void OnRespawn(PlayerRespawnEvent event) {
-    	if(uhcgame.getCurrentPhase().getName().equals("Playing")) {
-    		event.getPlayer().setGameMode(GameMode.SPECTATOR);
-    	}
-    }
 
     @EventHandler
-    private void OnDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity().getPlayer();
+    private void OnDeath(UhcDeathEvent event) {
+        Player player = event.getPlayer();
         if (uhcgame.getCurrentPhase().getName().equals("Playing")) {
             Map<Player, UhcPlayer> players = playerManager.getPlayers();
             players.remove(player); // Retirer le joueur décédé
@@ -399,13 +392,16 @@ public class PlayerListener implements Listener {
 	private void openGameModeInventory(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 27, ChatColor.GREEN + "Configurer les Rôles");
 
-        for (UhcRole role : UhcAPI.getInstance().getRoleManager().getValidRoles()) {
+        List<UhcRole> validRoles = UhcAPI.getInstance().getRoleManager().getValidRoles();
+        List<UhcRole> activeRoles = UhcAPI.getInstance().getRoleManager().getActiveRoles();
+        for (UhcRole role : validRoles) {
             ItemStack roleItem = new ItemStack(Material.PAPER); // Utilisez un item approprié
             ItemMeta meta = roleItem.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(role.getName()); // Assurez-vous que UhcRole à une méthode getName()
                 List<String> lore = new ArrayList<>();
                 lore.add(ChatColor.GRAY + "Cliquez pour " + (roleManager.getActiveRoles().contains(role) ? "désactiver" : "activer"));
+                lore.add(activeRoles.contains(role) ? ChatColor.GREEN + "Rôle activé" : ChatColor.RED + "Rôle désactivé");
                 meta.setLore(lore);
                 roleItem.setItemMeta(meta);
             }
@@ -601,12 +597,16 @@ public class PlayerListener implements Listener {
             if (clickedItem != null && clickedItem.getType() == Material.DIAMOND && 
                 clickedItem.getItemMeta().getDisplayName().equals(ChatColor.YELLOW + "Taille de la Bordure")) {
                 player.sendMessage(ChatColor.GREEN + "Veuillez entrer la taille de la bordure dans le chat (en blocs) :");
+                playerInputState.put(player, "borderSize");
+                player.closeInventory();
             }
 
             // Vérifier si l'item cliqué est celui pour définir le timer de la bordure
             if (clickedItem != null && clickedItem.getType() == Material.COMPASS && 
                 clickedItem.getItemMeta().getDisplayName().equals(ChatColor.YELLOW + "Timer de la Bordure")) {
                 player.sendMessage(ChatColor.GREEN + "Veuillez entrer le timer de la bordure en secondes :");
+                playerInputState.put(player, "borderTimer");
+                player.closeInventory();
             }
         }
     }
@@ -623,10 +623,10 @@ public class PlayerListener implements Listener {
                 uhcgame.setborderSize(borderSize); // Mettre à jour la taille de la bordure
                 player.sendMessage(ChatColor.GREEN + "Taille de la bordure définie à " + borderSize + " blocs.");
                 playerInputState.remove(player); // Réinitialiser l'état
+                event.setCancelled(true);
             } catch (NumberFormatException e) {
                 player.sendMessage(ChatColor.RED + "Veuillez entrer un nombre valide pour la taille de la bordure.");
             }
-            event.setCancelled(true); // Annuler l'événement pour éviter d'afficher le message dans le chat
         }
 
         // Vérifier si le joueur est en train de définir le timer de la bordure
@@ -636,10 +636,10 @@ public class PlayerListener implements Listener {
                 uhcgame.setborderTimer(borderTimer); // Mettre à jour le timer de la bordure
                 player.sendMessage(ChatColor.GREEN + "Timer de la bordure défini à " + borderTimer + " secondes.");
                 playerInputState.remove(player); // Réinitialiser l'état
+                event.setCancelled(true);
             } catch (NumberFormatException e) {
                 player.sendMessage(ChatColor.RED + "Veuillez entrer un nombre valide pour le timer de la bordure.");
             }
-            event.setCancelled(true); // Annuler l'événement pour éviter d'afficher le message dans le chat
         }
     }
 

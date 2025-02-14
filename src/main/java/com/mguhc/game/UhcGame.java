@@ -7,11 +7,11 @@ import java.util.Random;
 
 import com.mguhc.player.PlayerManager;
 import com.mguhc.roles.Camp;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -26,8 +26,8 @@ import com.mguhc.roles.UhcRole;
 public class UhcGame {
     private GamePhase currentPhase; // Champ pour la phase actuelle
     private int timePassed;
-    private int borderTimer;
-    private int borderSize;
+    private int borderTimer = 3600;
+    private int borderSize = 300;
 	private boolean ismettup = false;
 
 
@@ -39,7 +39,7 @@ public class UhcGame {
         RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
         Map<Player, UhcPlayer> players = UhcAPI.getInstance().getPlayerManager().getPlayers();
         if (roleManager.getActiveRoles().size() != players.size()) {
-            Bukkit.broadcastMessage("[UHC] Il vous faut autant de joueur que de rôles pour lancer la partie");
+            Bukkit.broadcastMessage(players.size() + " / " + roleManager.getActiveRoles().size());
             return;
         }
         // Changer la phase actuelle à "Playing"
@@ -62,6 +62,9 @@ public class UhcGame {
             UhcAPI.getInstance().getEffectManager().removeEffects(player);
             // Téléportation à un endroit aléatoire autour de (0, 0)
             teleportToRandomLocation(player);
+            if (ismettup) {
+                giveMeetupGear(player);
+            }
         }
 
         // Attribuer des rôles aux joueurs à partir du RoleManager
@@ -109,8 +112,91 @@ public class UhcGame {
             }
         }.runTaskTimer(UhcAPI.getInstance(), 0, 20); // Exécute toutes les secondes
 
-        Bukkit.getWorld("world").getWorldBorder().setSize(Math.max(borderSize, 1000));
+        Bukkit.getWorld("world").getWorldBorder().setSize(borderSize);
         Bukkit.getServer().getPluginManager().callEvent(new UhcStartEvent());
+    }
+
+    public void giveMeetupGear(Player player) {
+        // Casque en fer avec Protection III
+        ItemStack ironHelmet = new ItemStack(Material.IRON_HELMET);
+        ItemMeta ironHelmetMeta = ironHelmet.getItemMeta();
+        if (ironHelmetMeta != null) {
+            ironHelmetMeta.addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 3, true);
+            ironHelmet.setItemMeta(ironHelmetMeta);
+        }
+        player.getInventory().setHelmet(ironHelmet); // Mettre le casque
+
+        // Plastron en diamant avec Protection II
+        ItemStack diamondChestplate = new ItemStack(Material.DIAMOND_CHESTPLATE);
+        ItemMeta diamondChestplateMeta = diamondChestplate.getItemMeta();
+        if (diamondChestplateMeta != null) {
+            diamondChestplateMeta.addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 2, true);
+            diamondChestplate.setItemMeta(diamondChestplateMeta);
+        }
+        player.getInventory().setChestplate(diamondChestplate); // Mettre le plastron
+
+        // Pantalon en fer avec Protection III
+        ItemStack ironLeggings = new ItemStack(Material.IRON_LEGGINGS);
+        ItemMeta ironLeggingsMeta = ironLeggings.getItemMeta();
+        if (ironLeggingsMeta != null) {
+            ironLeggingsMeta.addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 3, true);
+            ironLeggings.setItemMeta(ironLeggingsMeta);
+        }
+        player.getInventory().setLeggings(ironLeggings); // Mettre le pantalon
+
+        // Bottes en diamant avec Protection II
+        ItemStack diamondBoots = new ItemStack(Material.DIAMOND_BOOTS);
+        ItemMeta diamondBootsMeta = diamondBoots.getItemMeta();
+        if (diamondBootsMeta != null) {
+            diamondBootsMeta.addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 2, true);
+            diamondBoots.setItemMeta(diamondBootsMeta);
+        }
+        player.getInventory().setBoots(diamondBoots); // Mettre les bottes
+
+        // Épée en diamant avec Tranchant III
+        ItemStack diamondSword = new ItemStack(Material.DIAMOND_SWORD);
+        ItemMeta diamondSwordMeta = diamondSword.getItemMeta();
+        if (diamondSwordMeta != null) {
+            diamondSwordMeta.addEnchant(Enchantment.DAMAGE_ALL, 3, true);
+            diamondSword.setItemMeta(diamondSwordMeta);
+        }
+        player.getInventory().setItem(0, diamondSword); // Mettre l'épée en slot 1
+
+        // Arc avec Power III
+        ItemStack bow = new ItemStack(Material.BOW);
+        ItemMeta bowMeta = bow.getItemMeta();
+        if (bowMeta != null) {
+            bowMeta.addEnchant(Enchantment.ARROW_DAMAGE, 3, true);
+            bow.setItemMeta(bowMeta);
+        }
+        player.getInventory().setItem(2, bow); // Mettre l'arc en slot 3
+
+        // Flèches
+        ItemStack arrows = new ItemStack(Material.ARROW, 16);
+        player.getInventory().setItem(3, arrows); // Mettre les flèches en slot 4
+
+        // Golden Apples
+        ItemStack goldenApples = new ItemStack(Material.GOLDEN_APPLE, 5);
+        player.getInventory().setItem(1, goldenApples); // Mettre les Golden Apples en slot 2
+
+        // Golden Carrots
+        ItemStack goldenCarrots = new ItemStack(Material.GOLDEN_CARROT, 64);
+        player.getInventory().setItem(5, goldenCarrots);
+
+        // Seau d'eau
+        ItemStack waterBucket = new ItemStack(Material.WATER_BUCKET);
+        player.getInventory().setItem(6, waterBucket); // Mettre le seau d'eau en slot 7
+
+        // Seau de lave
+        ItemStack lavaBucket = new ItemStack(Material.LAVA_BUCKET);
+        player.getInventory().setItem(7, lavaBucket); // Mettre le seau de lave en slot 8
+
+        // Cobblestone
+        ItemStack cobblestone = new ItemStack(Material.COBBLESTONE, 64);
+        player.getInventory().setItem(8, cobblestone); // Mettre la cobblestone en slot 9
+
+        // Mettre à jour l'inventaire du joueur
+        player.updateInventory();
     }
 
     private void teleportToRandomLocation(Player player) {
@@ -136,24 +222,7 @@ public class UhcGame {
         Bukkit.broadcastMessage("Le camp " + winner.getName() + " a gagné !");
         Bukkit.reload();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.setMaxHealth(20);
-            player.setHealth(20);
-            player.setSaturation(20);
-            player.getInventory().clear();
-            for (PotionEffect effect : player.getActivePotionEffects()) {
-                player.removePotionEffect(effect.getType());
-            }
-            UhcAPI.getInstance().getEffectManager().removeEffects(player);
-            player.setGameMode(GameMode.ADVENTURE);
-            World world = player.getWorld();
-            player.teleport(new Location(world, 0, 201, 0));
-
-            RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
-            PlayerManager playerManager = UhcAPI.getInstance().getPlayerManager();
-            if(roleManager.getRole(playerManager.getPlayer(player)) != null) {
-                roleManager.removeRole(playerManager.getPlayer(player));
-            }
-            playerManager.addPlayer(player);
+            player.kickPlayer("§cVeuillez vous reconnecter");
         }
     }
 
