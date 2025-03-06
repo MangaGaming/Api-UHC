@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.mguhc.player.PlayerManager;
 import com.mguhc.roles.Camp;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
@@ -66,26 +65,53 @@ public class UhcGame {
                 giveMeetupGear(player);
             }
         }
+        if (!ismettup) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    // Attribuer des rôles aux joueurs à partir du RoleManager
+                    List<UhcRole> activeRoles = roleManager.getActiveRoles(); // Récupérer les rôles valides
+                    List<UhcRole> assignedRoles = new ArrayList<>(); // Pour suivre les rôles attribués
 
-        // Attribuer des rôles aux joueurs à partir du RoleManager
-        List<UhcRole> activeRoles = roleManager.getActiveRoles(); // Récupérer les rôles valides
-        List<UhcRole> assignedRoles = new ArrayList<>(); // Pour suivre les rôles attribués
+                    for (Map.Entry<Player, UhcPlayer> entry : players.entrySet()) {
+                        UhcPlayer player = entry.getValue();
+                        UhcRole roleToAssign;
 
-        for (Map.Entry<Player, UhcPlayer> entry : players.entrySet()) {
-            UhcPlayer player = entry.getValue();
-            UhcRole roleToAssign;
+                        // Assigner un rôle aléatoire parmi les rôles valides
+                        do {
+                            roleToAssign = activeRoles.get((int) (Math.random() * activeRoles.size()));
+                        } while (assignedRoles.contains(roleToAssign)); // Éviter les doublons
 
-            // Assigner un rôle aléatoire parmi les rôles valides
-            do {
-                roleToAssign = activeRoles.get((int) (Math.random() * activeRoles.size()));
-            } while (assignedRoles.contains(roleToAssign)); // Éviter les doublons
+                        assignedRoles.add(roleToAssign); // Ajouter le rôle à la liste des rôles attribués
+                        roleManager.assignRole(player, roleToAssign);
+                    }
 
-            assignedRoles.add(roleToAssign); // Ajouter le rôle à la liste des rôles attribués
-            roleManager.assignRole(player, roleToAssign);
+                    // Déclencher l'événement RoleGiveEvent après que tous les rôles ont été attribués
+                    Bukkit.getPluginManager().callEvent(new RoleGiveEvent());
+                }
+            }.runTaskLater(UhcAPI.getInstance(), 20*60*20);
         }
+        else {
+            // Attribuer des rôles aux joueurs à partir du RoleManager
+            List<UhcRole> activeRoles = roleManager.getActiveRoles(); // Récupérer les rôles valides
+            List<UhcRole> assignedRoles = new ArrayList<>(); // Pour suivre les rôles attribués
 
-        // Déclencher l'événement RoleGiveEvent après que tous les rôles ont été attribués
-        Bukkit.getPluginManager().callEvent(new RoleGiveEvent());
+            for (Map.Entry<Player, UhcPlayer> entry : players.entrySet()) {
+                UhcPlayer player = entry.getValue();
+                UhcRole roleToAssign;
+
+                // Assigner un rôle aléatoire parmi les rôles valides
+                do {
+                    roleToAssign = activeRoles.get((int) (Math.random() * activeRoles.size()));
+                } while (assignedRoles.contains(roleToAssign)); // Éviter les doublons
+
+                assignedRoles.add(roleToAssign); // Ajouter le rôle à la liste des rôles attribués
+                roleManager.assignRole(player, roleToAssign);
+            }
+
+            // Déclencher l'événement RoleGiveEvent après que tous les rôles ont été attribués
+            Bukkit.getPluginManager().callEvent(new RoleGiveEvent());
+        }
 
         // Démarrer le timer pour le temps de jeu
         new BukkitRunnable() {
@@ -199,22 +225,22 @@ public class UhcGame {
         player.updateInventory();
     }
 
-    private void teleportToRandomLocation(Player player) {
+    public void teleportToRandomLocation(Player player) {
         Random random = new Random();
-        // Définir la plage de téléportation (par exemple, -100 à 100)
-        int range = 100;
+        int range = borderSize / 2;
 
         // Générer des coordonnées aléatoires
         int x = random.nextInt(range * 2) - range; // Valeur entre -100 et 100
         int z = random.nextInt(range * 2) - range; // Valeur entre -100 et 100
 
         // Trouver la hauteur (Y) la plus proche du sol
-        int y = player.getWorld().getHighestBlockYAt(x, z);
+        int y = 150;
 
         // Créer une nouvelle location
         Location randomLocation = new Location(player.getWorld(), x, y, z);
 
         // Téléporter le joueur
+        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10*20, 255, false, false));
         player.teleport(randomLocation);
     }
 

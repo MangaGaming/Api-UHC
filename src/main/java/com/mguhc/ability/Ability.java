@@ -1,10 +1,24 @@
 package com.mguhc.ability;
 
-import org.bukkit.entity.Player;
+public class Ability {
 
-public interface Ability {
-    void activate(Player player);
-    void deactivate(Player player);
-    double getCooldownDuration(); // Nouvelle méthode pour obtenir la durée de cooldown
-    void setCooldownDuration(double n);
+    private final String name;
+    private int cooldown;
+
+    public Ability(String name, int cooldown) {
+        this.name = name;
+        this.cooldown = cooldown;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getCooldown() {
+        return cooldown;
+    }
+
+    public void setCooldown(int v) {
+        cooldown = v;
+    }
 }

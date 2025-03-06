@@ -1,7 +1,6 @@
 name: UhcAPI
 version: 1.0
 main: com.mguhc.UhcAPI
-depend: [LuckPerms]
 commands:
   effects:
   color:

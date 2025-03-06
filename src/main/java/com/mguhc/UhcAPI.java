@@ -2,6 +2,7 @@ package com.mguhc;
 
 import com.mguhc.listeners.ColorCommand;
 import com.mguhc.listeners.KillListener;
+import com.mguhc.permsion.PermissionManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -14,10 +15,11 @@ import com.mguhc.ability.CooldownManager;
 import com.mguhc.effect.EffectManager;
 import com.mguhc.game.UhcGame;
 import com.mguhc.listeners.ModItemListener;
-import com.mguhc.listeners.PlayerListener;
+import com.mguhc.listeners.ConfigListener;
 import com.mguhc.player.PlayerManager;
 import com.mguhc.roles.RoleManager;
 import com.mguhc.scenario.ScenarioManager;
+import com.mguhc.listeners.EnchantListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +35,7 @@ public class UhcAPI extends JavaPlugin implements Listener {
 	private AbilityManager abilityManager;
 	private EffectManager effectManager;
     private Map<Player, Map<Player, ChatColor>> colorMap = new HashMap<>();
+    private PermissionManager permissonManager;
 
     @Override
     public void onEnable() {
@@ -41,6 +44,7 @@ public class UhcAPI extends JavaPlugin implements Listener {
         uhcgame = new UhcGame();
         effectManager = new EffectManager();
         roleManager = new RoleManager();
+        permissonManager = new PermissionManager();
         scenariomanager = new ScenarioManager();
         cooldownManager = new CooldownManager();
         abilityManager = new AbilityManager();
@@ -50,9 +54,10 @@ public class UhcAPI extends JavaPlugin implements Listener {
         PluginManager pluginManager = Bukkit.getPluginManager();
 		pluginManager.registerEvents(this, this);
 		pluginManager.registerEvents(effectManager, this);
-        pluginManager.registerEvents(new PlayerListener(uhcgame), this);
+        pluginManager.registerEvents(new ConfigListener(uhcgame), this);
         pluginManager.registerEvents(new KillListener(), this);
         pluginManager.registerEvents(new ModItemListener(), this);
+        pluginManager.registerEvents(new EnchantListener(), this);
         pluginManager.registerEvents(colorCommand, this);
     }
     
@@ -94,6 +99,10 @@ public class UhcAPI extends JavaPlugin implements Listener {
     
     public EffectManager getEffectManager() {
     	return effectManager;
+    }
+
+    public PermissionManager getPermissonManager() {
+        return permissonManager;
     }
 
     public Map<Player,Map<Player, ChatColor>> getColorMap() {

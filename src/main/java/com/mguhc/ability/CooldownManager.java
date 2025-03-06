@@ -15,7 +15,7 @@ public class CooldownManager {
 
     // Méthode pour démarrer un cooldown pour un joueur et une capacité spécifique
     public void startCooldown(Player player, Ability ability) {
-        double duration = ability.getCooldownDuration(); // Obtenir la durée de cooldown de l'ability
+        double duration = ability.getCooldown(); // Obtenir la durée de cooldown de l'ability
         playerCooldowns.putIfAbsent(player, new HashMap<>());
         playerCooldowns.get(player).put(ability, System.currentTimeMillis() + duration);
     }

@@ -2,10 +2,11 @@ package com.mguhc.listeners;
 
 import com.mguhc.UhcAPI;
 import com.mguhc.events.UhcDeathEvent;
+import com.mguhc.game.UhcGame;
 import com.mguhc.player.PlayerManager;
 import com.mguhc.player.UhcPlayer;
+import com.mguhc.roles.Camp;
 import com.mguhc.roles.RoleManager;
-import net.minecraft.server.v1_8_R3.PlayerConnection;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -50,21 +51,23 @@ public class KillListener implements Listener {
     private void OnRespawn(PlayerRespawnEvent event) {
         if (UhcAPI.getInstance().getUhcGame().getCurrentPhase().getName().equals("Playing")) {
             Player player = event.getPlayer();
-            player.teleport(new Location(player.getWorld(), 0, 200, 0));
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    Player killer = killerMap.getOrDefault(player, null);
-                    player.setGameMode(GameMode.SPECTATOR);
-                    if (killer != null) {
-                        player.teleport(killer);
-                    }
-                    List<ItemStack> drops = dropsMap.get(player);
-                    Location location = locationMap.get(player);
-                    Bukkit.getPluginManager().callEvent(new UhcDeathEvent(player, killer, drops, location));
-                    for (ItemStack item : drops) {
-                        if (item != null) {
-                            killer.getWorld().dropItem(location, item);
+                    if (player.getLocation().getY() > 150) {
+                        Player killer = killerMap.getOrDefault(player, null);
+                        player.setGameMode(GameMode.SPECTATOR);
+                        if (killer != null) {
+                            UhcAPI.getInstance().getPlayerManager().addKill(player);
+                            player.teleport(killer);
+                        }
+                        List<ItemStack> drops = dropsMap.get(player);
+                        Location location = locationMap.get(player);
+                        Bukkit.getPluginManager().callEvent(new UhcDeathEvent(player, killer, drops, location));
+                        for (ItemStack item : drops) {
+                            if (item != null) {
+                                killer.getWorld().dropItem(location, item);
+                            }
                         }
                     }
                 }
@@ -81,5 +84,36 @@ public class KillListener implements Listener {
                 "§6" + player.getName() + "est mort il était : \n" +
                 "§c" + roleManager.getRole(playerManager.getPlayer(player)).getName() + "\n" +
                 "§7__________");
+    }
+
+    @EventHandler
+    private void OnWin(UhcDeathEvent event) {
+        Player player = event.getPlayer();
+        UhcGame uhcgame = UhcAPI.getInstance().getUhcGame();
+        PlayerManager playerManager = UhcAPI.getInstance().getPlayerManager();
+        RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
+        if (uhcgame.getCurrentPhase().getName().equals("Playing")) {
+            Map<Player, UhcPlayer> players = playerManager.getPlayers();
+            players.remove(player); // Retirer le joueur décédé
+
+            // Vérifier si tous les joueurs restants sont dans le même camp
+            if (!players.isEmpty()) { // S'assurer qu'il reste des joueurs
+                Camp firstCamp = roleManager.getCamp(players.values().iterator().next()); // Obtenir le camp du premier joueur
+                boolean allSameCamp = true;
+
+                for (UhcPlayer uhcPlayer : players.values()) {
+                    Camp currentCamp = roleManager.getCamp(uhcPlayer);
+                    if (!currentCamp.equals(firstCamp)) {
+                        allSameCamp = false; // Si un joueur n'est pas dans le même camp, mettre à jour le drapeau
+                        break;
+                    }
+                }
+
+                // Si tous les joueurs sont dans le même camp, finir le jeu
+                if (allSameCamp) {
+                    uhcgame.finishGame(firstCamp);
+                }
+            }
+        }
     }
 }
