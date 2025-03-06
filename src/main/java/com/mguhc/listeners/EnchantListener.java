@@ -116,30 +116,35 @@ public class EnchantListener implements Listener {
         if (event.getView().getType() == InventoryType.ANVIL) {
             Player player = (Player) event.getWhoClicked();
             Inventory openInventory = event.getClickedInventory();
-            ItemStack item1 = openInventory.getItem(2);
-            ItemStack item2 = openInventory.getItem(1);
+            if (openInventory == null) {
+                return;
+            }
+            ItemStack item1 = openInventory.getItem(0); // L'item de gauche
+            ItemStack item2 = openInventory.getItem(1); // L'item de droite (enchantement)
 
-            if (item1 != null && item2 != null) {
-                int maxEnchant = maxEnchantMap.getOrDefault(item1.getType(), 0);
-                if (isEnchantable(item1, item2)) {
-                    // Récupérer le niveau d'enchantement du livre
-                    int bookEnchantLevel = item2.getEnchantments().values().stream().findFirst().orElse(0);
-                    if (bookEnchantLevel > maxEnchant) {
-                        player.sendMessage(ChatColor.RED + "§cVous ne pouvez pas ajouter cet enchantement au-delà du niveau " + maxEnchant);
+            if (item1 == null || item2 == null) {
+                return;
+            }
+
+            int maxEnchant = maxEnchantMap.getOrDefault(item1.getType(), 0);
+            if (isEnchantable(item1, item2)) {
+                // Récupérer le niveau d'enchantement du livre
+                int bookEnchantLevel = item2.getEnchantments().values().stream().findFirst().orElse(0);
+                if (bookEnchantLevel > maxEnchant) {
+                    player.sendMessage(ChatColor.RED + "§cVous ne pouvez pas ajouter cet enchantement au-delà du niveau " + maxEnchant);
+                    event.setCancelled(true);
+                    return;
+                }
+
+                // Vérifiez si l'item de gauche a des enchantements
+                Map<Enchantment, Integer> itemEnchantments = item1.getEnchantments();
+                for (Map.Entry<Enchantment, Integer> entry : itemEnchantments.entrySet()) {
+                    int currentLevel = entry.getValue();
+                    int newLevel = currentLevel + bookEnchantLevel;
+                    if (newLevel > maxEnchant) {
+                        player.sendMessage(ChatColor.RED + "§cVous ne pouvez pas combiner cet item au-delà du niveau " + maxEnchant);
                         event.setCancelled(true);
                         return;
-                    }
-
-                    // Vérifiez si l'item de gauche a des enchantements
-                    Map<Enchantment, Integer> itemEnchantments = item1.getEnchantments();
-                    for (Map.Entry<Enchantment, Integer> entry : itemEnchantments.entrySet()) {
-                        int currentLevel = entry.getValue();
-                        int newLevel = currentLevel + bookEnchantLevel;
-                        if (newLevel > maxEnchant) {
-                            player.sendMessage(ChatColor.RED + "§cVous ne pouvez pas combiner cet item au-delà du niveau " + maxEnchant);
-                            event.setCancelled(true);
-                            return;
-                        }
                     }
                 }
             }
@@ -264,5 +269,22 @@ public class EnchantListener implements Listener {
 
     public static EnchantListener getInstance() {
         return instance;
+    }
+
+    @EventHandler
+    private void OnInventoryClick(InventoryClickEvent event) {
+        Player player = (Player) event.getWhoClicked();
+        ItemStack clickedItem = event.getCurrentItem();
+
+        if (clickedItem != null) {
+            Inventory openInventory = event.getClickedInventory();
+            for (int slot = 0; slot < openInventory.getSize(); slot++) {
+                ItemStack item = openInventory.getItem(slot);
+                if (item != null && item.equals(clickedItem)) {
+                    Bukkit.getLogger().info("Item cliqué trouvé dans le slot: " + slot);
+                    break; // Sortir de la boucle une fois que l'item est trouvé
+                }
+            }
+        }
     }
 }
