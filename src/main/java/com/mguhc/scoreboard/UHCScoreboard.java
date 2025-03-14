@@ -1,5 +1,8 @@
 package com.mguhc.scoreboard;
 
+import com.mguhc.game.UhcGame;
+import com.mguhc.player.PlayerManager;
+import com.mguhc.roles.RoleManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -12,6 +15,15 @@ import com.mguhc.roles.UhcRole;
 import java.util.Map;
 
 public class UHCScoreboard {
+    private final UhcAPI uhcAPI = UhcAPI.getInstance();
+    private final UhcGame uhcGame = uhcAPI.getUhcGame();
+    private final PlayerManager playerManager = uhcAPI.getPlayerManager();
+    private final RoleManager roleManager = uhcAPI.getRoleManager();
+
+    private Score playerSize;
+    private Score kill;
+    private Score time;
+    private Score role;
 
     public void createScoreboard(Player player) {
         ScoreboardManager manager = Bukkit.getScoreboardManager();
@@ -19,45 +31,37 @@ public class UHCScoreboard {
 
         // Créer l'objectif du scoreboard avec le titre UHC
         Objective objective = scoreboard.registerNewObjective("uhc", "dummy");
-        objective.setDisplayName(ChatColor.GOLD + UhcAPI.getInstance().getUhcName());
+        objective.setDisplayName("§9§l" + uhcAPI.getUhcName());
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // Espace vide pour l'esthétique
-        Score line1 = objective.getScore(ChatColor.DARK_GRAY + "__________________");
-        line1.setScore(8);
+        // Initialisation des scores
+        Score vide = objective.getScore("§f ");
+        vide.setScore(9);
 
-        // Ligne 1 : Border
-        Score borderLabel = objective.getScore(ChatColor.YELLOW + "Border :");
-        borderLabel.setScore(7);
-        final Score[] borderValue = { objective.getScore(getBorderSizeString()) };
-        borderValue[0].setScore(6);
+        playerSize = objective.getScore("§8┃ §fJoueur §7▸ §b" + getPlayers());
+        playerSize.setScore(8);
 
-        // Espace vide pour l'esthétique
-        Score line2 = objective.getScore(ChatColor.DARK_GRAY + "_________________");
-        line2.setScore(5);
+        kill = objective.getScore("§8┃ §fKill §7▸ §b" + getKill(player));
+        kill.setScore(7);
 
-        // Ligne 2 : Joueurs
-        Score playersLabel = objective.getScore(ChatColor.GREEN + "Joueurs :");
-        playersLabel.setScore(4);
-        final Score[] playersValue = { objective.getScore(getOnlinePlayersString()) };
-        playersValue[0].setScore(3);
+        Score vide1 = objective.getScore("§f§f ");
+        vide1.setScore(6);
 
-        // Espace vide pour l'esthétique
-        Score line3 = objective.getScore(ChatColor.DARK_GRAY + "________________");
-        line3.setScore(2);
+        time = objective.getScore("§8┃ §fTemps §7▸ §b" + getTime());
+        time.setScore(5);
 
-        // Ligne 3 : Temps écoulé
-        final Score[] timeValue = { objective.getScore(ChatColor.RED + "Temps: " + formatTime(UhcAPI.getInstance().getUhcGame().getTimePassed())) };
-        timeValue[0].setScore(0);
+        Score vide2 = objective.getScore("§f§f§f ");
+        vide2.setScore(4);
 
+        role = objective.getScore("§8┃ §fRôle §7▸ §b" + getRole(player));
+        role.setScore(3);
 
-        // Ligne 4 : Rôle du joueur
-        Score roleLabel = objective.getScore(ChatColor.AQUA + "Role :");
-        roleLabel.setScore(-1);
-        final Score[] roleValue = { objective.getScore(getPlayerRole(player)) };
-        roleValue[0].setScore(-2);
+        Score vide3 = objective.getScore("§f§f§f§f ");
+        vide3.setScore(2);
 
-        // Appliquer le scoreboard initial au joueur
+        Score pub = objective.getScore("§9§l@MangaGaming      §f");
+        pub.setScore(1);
+
         player.setScoreboard(scoreboard);
 
         // Créer une tâche répétitive pour mettre à jour les scores
@@ -65,40 +69,32 @@ public class UHCScoreboard {
             @Override
             public void run() {
                 if (!player.isOnline()) {
-                    this.cancel(); // Annuler la tâche si le joueur se déconnecte
-                    return;
+                    this.cancel();
+                    return; // Annuler la tâche si le joueur n'est plus en ligne
                 }
 
-                // Mettre à jour la taille de la border
-                scoreboard.resetScores(borderValue[0].getEntry());
-                borderValue[0] = objective.getScore(getBorderSizeString());
-                borderValue[0].setScore(6);
+                scoreboard.resetScores(playerSize.getEntry());
+                scoreboard.resetScores(kill.getEntry());
+                scoreboard.resetScores(time.getEntry());
+                scoreboard.resetScores(role.getEntry());
 
-                // Mettre à jour le nombre de joueurs en ligne
-                scoreboard.resetScores(playersValue[0].getEntry());
-                playersValue[0] = objective.getScore(getOnlinePlayersString());
-                playersValue[0].setScore(3);
+                playerSize = objective.getScore("§8┃ §fJoueur §7▸ §b" + getPlayers());
+                playerSize.setScore(8);
+                kill = objective.getScore("§8┃ §fKill §7▸ §b" + getKill(player));
+                kill.setScore(7);
+                time = objective.getScore("§8┃ §fTemps §7▸ §b" + getTime());
+                time.setScore(5);
+                role = objective.getScore("§8┃ §fRôle §7▸ §b" + getRole(player));
+                role.setScore(3);
 
-                // Mettre à jour le temps passé
-                scoreboard.resetScores(timeValue[0].getEntry());
-                timeValue[0] = objective.getScore(ChatColor.RED + "Temps: " + formatTime(UhcAPI.getInstance().getUhcGame().getTimePassed()));
-                timeValue[0].setScore(0);
-
-                // Mettre à jour le rôle du joueur
-                scoreboard.resetScores(roleValue[0].getEntry());
-                roleValue[0] = objective.getScore(getPlayerRole(player));
-                roleValue[0].setScore(-2);
-
-                updateColors(player, scoreboard);
-
-                // Rafraîchir le scoreboard du joueur
+                // Mettre à jour le scoreboard pour le joueur
                 player.setScoreboard(scoreboard);
             }
-        }.runTaskTimer(UhcAPI.getInstance(), 0, 20); // Mettre à jour toutes les 5 secondes (20 ticks par seconde)
+        }.runTaskTimer(uhcAPI, 0, 20);
     }
 
     private void updateColors(Player player, Scoreboard scoreboard) {
-        Map<Player, ChatColor> colorMap = UhcAPI.getInstance().getColorMap().get(player);
+        Map<Player, ChatColor> colorMap = uhcAPI.getColorMap().get(player);
         if (colorMap != null) {
             for (Map.Entry<Player, ChatColor> entry : colorMap.entrySet()) {
                 Player p = entry.getKey();
@@ -149,30 +145,29 @@ public class UHCScoreboard {
         }
     }
 
-    // Méthode pour obtenir la taille de la border en tant que chaîne
-    private String getBorderSizeString() {
-        double borderSize = Bukkit.getWorld("world").getWorldBorder().getSize();
-        return ChatColor.YELLOW + String.valueOf((int) borderSize);
+    private String getPlayers() {
+        int onlinePlayers = playerManager.getPlayers().size();
+        return String.valueOf(onlinePlayers);
     }
 
-    // Méthode pour obtenir le nombre de joueurs en ligne
-    private String getOnlinePlayersString() {
-        int onlinePlayers = Bukkit.getOnlinePlayers().size();
-        return ChatColor.GREEN + String.valueOf(onlinePlayers);
-    }
-
-    // Méthode pour obtenir le rôle du joueur
-    private String getPlayerRole(Player player) {
-        UhcRole role = UhcAPI.getInstance().getRoleManager().getRole(UhcAPI.getInstance().getPlayerManager().getPlayer(player));
+    private String getRole(Player player) {
+        UhcRole role = roleManager.getRole(playerManager.getPlayer(player));
         if(role != null) {
-            return ChatColor.AQUA + role.getName();
+            return role.getName();
         }
         else {
-        	return ChatColor.AQUA + "Aucun";
+        	return "Aucun";
         }
     }
+
+    private String getKill(Player player) {
+        int kill = playerManager.getKill(player);
+        return String.valueOf(kill);
+    }
     
-    private String formatTime(int time) {
+    private String getTime() {
+        int time = uhcGame.getTimePassed();
+
         int minutes = time / 60;
         int seconds = time % 60;
         return String.format("%02d:%02d", minutes, seconds);

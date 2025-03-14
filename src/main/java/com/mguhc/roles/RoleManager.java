@@ -39,9 +39,6 @@ public class RoleManager {
         Player player = uhc_player.getPlayer();
 		if (assignedCamp != null) {
             playerCamps.put(uhc_player, assignedCamp); // Assigner le camp au joueur
-            player.sendMessage("Vous avez été assigné au camp : " + assignedCamp.getName());
-        } else {
-            player.sendMessage("Aucun camp associé à ce rôle.");
         }
 
         player.sendMessage(role.getDescription());

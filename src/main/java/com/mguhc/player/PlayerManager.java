@@ -8,12 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class PlayerManager {
-    private Map<UUID, UhcPlayer> players;
-    private Map<UUID, Integer> killMap;
-
-    public PlayerManager() {
-        players = new HashMap<>();
-    }
+    private final Map<UUID, UhcPlayer> players = new HashMap<>();
+    private final Map<UUID, Integer> killMap = new HashMap<>();
 
     public void addPlayer(Player player) {
         players.put(player.getUniqueId(), new UhcPlayer(player));
@@ -40,6 +36,20 @@ public class PlayerManager {
     }
 
     public void addKill(Player player) {
-        killMap.put(player.getUniqueId(), getKill(player) + 1);
+        // Vérifiez si le joueur est null
+        if (player == null) {
+            return; // Sortir si le joueur est null
+        }
+
+        // Obtenez le nombre de kills actuel
+        Integer currentKills = getKill(player);
+
+        // Si currentKills est null, initialisez-le à 0
+        if (currentKills == null) {
+            currentKills = 0;
+        }
+
+        // Incrémentez le nombre de kills et mettez à jour le killMap
+        killMap.put(player.getUniqueId(), currentKills + 1);
     }
 }

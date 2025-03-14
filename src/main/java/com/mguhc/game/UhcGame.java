@@ -26,7 +26,7 @@ public class UhcGame {
     private GamePhase currentPhase; // Champ pour la phase actuelle
     private int timePassed;
     private int borderTimer = 3600;
-    private int borderSize = 300;
+    private int borderSize = 3000;
 	private boolean ismettup = false;
 
 
@@ -240,7 +240,7 @@ public class UhcGame {
         Location randomLocation = new Location(player.getWorld(), x, y, z);
 
         // Téléporter le joueur
-        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10*20, 255, false, false));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 30*20, 255, false, false));
         player.teleport(randomLocation);
     }
 

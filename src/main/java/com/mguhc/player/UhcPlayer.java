@@ -1,5 +1,7 @@
 package com.mguhc.player;
 
+import com.mguhc.roles.Camp;
+import com.mguhc.roles.RoleManager;
 import org.bukkit.entity.Player;
 
 import com.mguhc.UhcAPI;
@@ -9,7 +11,7 @@ public class UhcPlayer {
     private Player player;
     private boolean isAlive;
     private int health;
-    // Ajoutez d'autres attributs si nécessaire
+    private RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
 
     public UhcPlayer(Player player) {
         this.player = player;
@@ -38,12 +40,10 @@ public class UhcPlayer {
     }
     
     public UhcRole getRole() {
-    	UhcRole role = UhcAPI.getInstance().getRoleManager().getRole(this);
-    	if(role != null) {
-    		return role;
-    	}
-    	else {
-    		return null;
-    	}
+        return roleManager.getRole(this);
+    }
+
+    public Camp getCamp() {
+        return roleManager.getCamp(this);
     }
 }

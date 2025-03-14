@@ -8,7 +8,10 @@ import com.mguhc.permsion.PermissionManager;
 import com.mguhc.player.UhcPlayer;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -31,6 +34,7 @@ import com.mguhc.scenario.ScenarioManager;
 import com.mguhc.scoreboard.UHCScoreboard;
 
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class ConfigListener implements Listener {
 
@@ -56,9 +60,13 @@ public class ConfigListener implements Listener {
         World world = Bukkit.getWorld("world");
         UHCScoreboard uhcscoreboard = new UHCScoreboard();
         uhcscoreboard.createScoreboard(player);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                UhcAPI.setTabHeaderFooter(player);
+            }
+        }.runTaskTimer(UhcAPI.getInstance(), 0, 20);
         GamePhase currentphase = uhcgame.getCurrentPhase();
-        player.setAllowFlight(true);
-        
         if (currentphase.getName().equals("Waiting")) {
             player.setMaxHealth(20);
             player.setHealth(20);
@@ -92,7 +100,32 @@ public class ConfigListener implements Listener {
                 	giveModItems(player);
             	}
             }
+            event.setJoinMessage("§f \n" +
+                    "§a│ §fLe joueur §a§l" + player.getName() + " §fvient de rejoindre. §3(§f" + playerManager.getPlayers().size() + "§b/§f40§3)");
+            sendClickableMessage(player);
         }
+    }
+
+    public static void sendClickableMessage(Player player) {
+        FileConfiguration config = UhcAPI.getInstance().getConfig();
+        // Créer le message
+        TextComponent message = new TextComponent("§f\n§f\n§3§l» §f§lMangaGaming Dev §3● §f" + UhcAPI.getInstance().getUhcName() + "\n§f\n");
+
+        // Ajouter le texte pour le serveur professionnel
+        TextComponent professional = new TextComponent("§3│ §fServeur de §eboutiquel§f. §b(§fcliquez§b)");
+        professional.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://discord.gg/XeDFVQHmbd"));
+        message.addExtra(professional);
+
+        // Ajouter un saut de ligne
+        message.addExtra("\n");
+
+        // Ajouter le texte pour le serveur communautaire
+        TextComponent community = new TextComponent("§3│ §fNotre serveur de §ccommunautaire§f. §b(§fcliquez§b)");
+        community.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, config.getString("link.discord")));
+        message.addExtra(community);
+
+        // Envoyer le message au joueur
+        player.spigot().sendMessage(message);
     }
     
     @EventHandler

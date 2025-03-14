@@ -37,22 +37,22 @@ public class EffectManager implements Listener {
     }
 
     public void setSpeed(Player player, double level) {
-        speedEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.SPEED, 20) * level));
+        speedEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.SPEED, 30) * level));
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, true, false)); // Appliquer effet de vitesse
     }
 
     public void setStrength(Player player, double level) {
-        strengthEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.INCREASE_DAMAGE, 20) * level));
+        strengthEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.INCREASE_DAMAGE, 30) * level));
         player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, Integer.MAX_VALUE, 0, true, false)); // Appliquer effet de force
     }
 
     public void setResistance(Player player, double level) {
-        resistanceEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.DAMAGE_RESISTANCE, 20) * level));
+        resistanceEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.DAMAGE_RESISTANCE, 30) * level));
         player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 0, true, false)); // Appliquer effet de résistance
     }
 
     public void setWeakness(Player player, double level) {
-        weaknessEffects.put(player.getUniqueId(), (int) (effectLevel1.getOrDefault(PotionEffectType.WEAKNESS, 20) * level));
+        weaknessEffects.put(player.getUniqueId(), (int) (((double) effectLevel1.getOrDefault(PotionEffectType.INCREASE_DAMAGE, 30) /2) * level));
         player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, Integer.MAX_VALUE, 0, true, false)); // Appliquer effet de faiblesse
     }
 
@@ -85,7 +85,7 @@ public class EffectManager implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         if (speedEffects.containsKey(player.getUniqueId())) {
-            player.setWalkSpeed((float) 0.2 * (1 + (float) speedEffects.get(player.getUniqueId()) / 100));
+            player.setWalkSpeed((float) 0.16 * (1 + (float) speedEffects.get(player.getUniqueId()) / 100));
         } else {
             player.setWalkSpeed(0.2f);
         }

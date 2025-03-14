@@ -270,21 +270,4 @@ public class EnchantListener implements Listener {
     public static EnchantListener getInstance() {
         return instance;
     }
-
-    @EventHandler
-    private void OnInventoryClick(InventoryClickEvent event) {
-        Player player = (Player) event.getWhoClicked();
-        ItemStack clickedItem = event.getCurrentItem();
-
-        if (clickedItem != null) {
-            Inventory openInventory = event.getClickedInventory();
-            for (int slot = 0; slot < openInventory.getSize(); slot++) {
-                ItemStack item = openInventory.getItem(slot);
-                if (item != null && item.equals(clickedItem)) {
-                    Bukkit.getLogger().info("Item cliqué trouvé dans le slot: " + slot);
-                    break; // Sortir de la boucle une fois que l'item est trouvé
-                }
-            }
-        }
-    }
 }

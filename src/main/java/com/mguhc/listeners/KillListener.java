@@ -80,6 +80,10 @@ public class KillListener implements Listener {
         Player player = event.getPlayer();
         RoleManager roleManager = UhcAPI.getInstance().getRoleManager();
         PlayerManager playerManager = UhcAPI.getInstance().getPlayerManager();
+        Player killer = event.getKiller();
+        if (killer != null) {
+            playerManager.addKill(killer);
+        }
         Bukkit.broadcastMessage("§7__________\n" +
                 "§6" + player.getName() + "est mort il était : \n" +
                 "§c" + roleManager.getRole(playerManager.getPlayer(player)).getName() + "\n" +

@@ -22,23 +22,23 @@ public class CooldownManager {
 
     // Méthode pour vérifier si un joueur est en cooldown pour une capacité spécifique
     public boolean isInCooldown(Player player, Ability ability) {
-        if (!playerCooldowns.containsKey(player) || !playerCooldowns.get(player).containsKey(ability)) {
-            return false; // Pas de cooldown actif pour cette capacité
-        }
-        Double endTime = playerCooldowns.get(player).get(ability);
-        if (System.currentTimeMillis() > endTime) {
-            playerCooldowns.get(player).remove(ability); // Retirer le cooldown si le temps est écoulé
-            return false;
-        }
-        return true; // Le joueur est toujours en cooldown pour cette capacité
+        return getRemainingCooldown(player, ability) == 0;
     }
 
     // Méthode pour obtenir le temps restant sur le cooldown d'un joueur pour une capacité spécifique
     public double getRemainingCooldown(Player player, Ability ability) {
-        if (!isInCooldown(player, ability)) {
-            return 0; // Pas de cooldown actif pour cette capacité
+        // Vérifiez si le joueur a des cooldowns enregistrés
+        if (!playerCooldowns.containsKey(player)) {
+            return 0; // Aucun cooldown enregistré pour ce joueur
         }
-        double endTime = playerCooldowns.get(player).get(ability);
+
+        // Vérifiez si l'ability à un cooldown enregistré
+        Map<Ability, Double> cooldowns = playerCooldowns.get(player);
+        if (!cooldowns.containsKey(ability)) {
+            return 0; // Aucun cooldown enregistré pour cette capacité
+        }
+
+        double endTime = cooldowns.get(ability);
         return endTime - System.currentTimeMillis(); // Temps restant en millisecondes
     }
 
