@@ -92,25 +92,30 @@ public class UhcGame {
             }.runTaskLater(UhcAPI.getInstance(), 20*60*20);
         }
         else {
-            // Attribuer des rôles aux joueurs à partir du RoleManager
-            List<UhcRole> activeRoles = roleManager.getActiveRoles(); // Récupérer les rôles valides
-            List<UhcRole> assignedRoles = new ArrayList<>(); // Pour suivre les rôles attribués
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    // Attribuer des rôles aux joueurs à partir du RoleManager
+                    List<UhcRole> activeRoles = roleManager.getActiveRoles(); // Récupérer les rôles valides
+                    List<UhcRole> assignedRoles = new ArrayList<>(); // Pour suivre les rôles attribués
 
-            for (Map.Entry<Player, UhcPlayer> entry : players.entrySet()) {
-                UhcPlayer player = entry.getValue();
-                UhcRole roleToAssign;
+                    for (Map.Entry<Player, UhcPlayer> entry : players.entrySet()) {
+                        UhcPlayer player = entry.getValue();
+                        UhcRole roleToAssign;
 
-                // Assigner un rôle aléatoire parmi les rôles valides
-                do {
-                    roleToAssign = activeRoles.get((int) (Math.random() * activeRoles.size()));
-                } while (assignedRoles.contains(roleToAssign)); // Éviter les doublons
+                        // Assigner un rôle aléatoire parmi les rôles valides
+                        do {
+                            roleToAssign = activeRoles.get((int) (Math.random() * activeRoles.size()));
+                        } while (assignedRoles.contains(roleToAssign)); // Éviter les doublons
 
-                assignedRoles.add(roleToAssign); // Ajouter le rôle à la liste des rôles attribués
-                roleManager.assignRole(player, roleToAssign);
-            }
+                        assignedRoles.add(roleToAssign); // Ajouter le rôle à la liste des rôles attribués
+                        roleManager.assignRole(player, roleToAssign);
+                    }
 
-            // Déclencher l'événement RoleGiveEvent après que tous les rôles ont été attribués
-            Bukkit.getPluginManager().callEvent(new RoleGiveEvent());
+                    // Déclencher l'événement RoleGiveEvent après que tous les rôles ont été attribués
+                    Bukkit.getPluginManager().callEvent(new RoleGiveEvent());
+                }
+            }.runTaskLater(UhcAPI.getInstance(), 10*20);
         }
 
         // Démarrer le timer pour le temps de jeu
