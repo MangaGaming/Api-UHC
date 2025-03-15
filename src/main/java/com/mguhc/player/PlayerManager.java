@@ -1,11 +1,10 @@
 package com.mguhc.player;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class PlayerManager {
     private final Map<UUID, UhcPlayer> players = new HashMap<>();
@@ -51,5 +50,15 @@ public class PlayerManager {
 
         // Incrémentez le nombre de kills et mettez à jour le killMap
         killMap.put(player.getUniqueId(), currentKills + 1);
+    }
+
+    public List<Player> getPlayersAround(Player player, int distance) {
+        List<Player> nearbyPlayers = new ArrayList<>();
+        for (Entity e : player.getNearbyEntities(distance, distance, distance)){
+            if (e instanceof Player) {
+                nearbyPlayers.add((Player) e);
+            }
+        }
+        return nearbyPlayers;
     }
 }
