@@ -2,9 +2,13 @@ package com.mguhc.scoreboard;
 
 import com.mguhc.game.UhcGame;
 import com.mguhc.player.PlayerManager;
+import com.mguhc.player.UhcPlayer;
+import com.mguhc.roles.Camp;
 import com.mguhc.roles.RoleManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
@@ -19,11 +23,13 @@ public class UHCScoreboard {
     private final UhcGame uhcGame = uhcAPI.getUhcGame();
     private final PlayerManager playerManager = uhcAPI.getPlayerManager();
     private final RoleManager roleManager = uhcAPI.getRoleManager();
+    private final FileConfiguration config = uhcAPI.getConfig();
 
     private Score playerSize;
     private Score kill;
     private Score time;
     private Score role;
+    private Score cycle;
 
     public void createScoreboard(Player player) {
         ScoreboardManager manager = Bukkit.getScoreboardManager();
@@ -31,35 +37,35 @@ public class UHCScoreboard {
 
         // Créer l'objectif du scoreboard avec le titre UHC
         Objective objective = scoreboard.registerNewObjective("uhc", "dummy");
-        objective.setDisplayName("§9§l" + uhcAPI.getUhcName());
+        objective.setDisplayName("§4§l" + uhcAPI.getUhcName());
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         // Initialisation des scores
         Score vide = objective.getScore("§f ");
         vide.setScore(9);
 
-        playerSize = objective.getScore("§8┃ §fJoueur §7▸ §b" + getPlayers());
+        playerSize = objective.getScore("§f┃ §aJoueurs §f▸ §a" + getPlayers());
         playerSize.setScore(8);
 
-        kill = objective.getScore("§8┃ §fKill §7▸ §b" + getKill(player));
+        kill = objective.getScore("§f┃ §cEliminations §f▸ §c" + getKill(player));
         kill.setScore(7);
 
+        role = objective.getScore("§f┃ §8Rôle §f▸ " + getRole(player));
+        role.setScore(6);
+
         Score vide1 = objective.getScore("§f§f ");
-        vide1.setScore(6);
+        vide1.setScore(5);
 
-        time = objective.getScore("§8┃ §fTemps §7▸ §b" + getTime());
-        time.setScore(5);
+        time = objective.getScore("§f┃ §8Temps §f▸ §8" + getTime());
+        time.setScore(4);
 
-        Score vide2 = objective.getScore("§f§f§f ");
-        vide2.setScore(4);
-
-        role = objective.getScore("§8┃ §fRôle §7▸ §b" + getRole(player));
-        role.setScore(3);
+        cycle = objective.getScore("§f┃ §8Cycle §f▸ " + getCycle());
+        cycle.setScore(3);
 
         Score vide3 = objective.getScore("§f§f§f§f ");
         vide3.setScore(2);
 
-        Score pub = objective.getScore("§9§l@MangaGaming      §f");
+        Score pub = objective.getScore("§f§l@MangaGaming @AxisRonflex §f");
         pub.setScore(1);
 
         player.setScoreboard(scoreboard);
@@ -77,15 +83,18 @@ public class UHCScoreboard {
                 scoreboard.resetScores(kill.getEntry());
                 scoreboard.resetScores(time.getEntry());
                 scoreboard.resetScores(role.getEntry());
+                scoreboard.resetScores(cycle.getEntry());
 
-                playerSize = objective.getScore("§8┃ §fJoueur §7▸ §b" + getPlayers());
+                playerSize = objective.getScore("§f┃ §aJoueurs §f▸ §a" + getPlayers());
                 playerSize.setScore(8);
-                kill = objective.getScore("§8┃ §fKill §7▸ §b" + getKill(player));
+                kill = objective.getScore("§f┃ §cEliminations §f▸ §c" + getKill(player));
                 kill.setScore(7);
-                time = objective.getScore("§8┃ §fTemps §7▸ §b" + getTime());
-                time.setScore(5);
-                role = objective.getScore("§8┃ §fRôle §7▸ §b" + getRole(player));
-                role.setScore(3);
+                role = objective.getScore("§f┃ §8Rôle §f▸ " + getRole(player));
+                role.setScore(6);
+                time = objective.getScore("§f┃ §8Temps §f▸ §8" + getTime());
+                time.setScore(4);
+                cycle = objective.getScore("§f┃ §8Cycle §f▸ " + getCycle());
+                cycle.setScore(3);
 
                 // Mettre à jour le scoreboard pour le joueur
                 player.setScoreboard(scoreboard);
@@ -150,13 +159,14 @@ public class UHCScoreboard {
         return String.valueOf(onlinePlayers);
     }
 
-    private String getRole(Player player) {
-        UhcRole role = roleManager.getRole(playerManager.getPlayer(player));
-        if(role != null) {
-            return role.getName();
-        }
-        else {
-        	return "Aucun";
+    private String getCycle() {
+        World world = Bukkit.getWorld("world");
+        long time = world.getTime();
+
+        if (time >= 0 && time < 12300) {
+            return "§eJour";
+        } else {
+            return "§1Nuit";
         }
     }
 
@@ -171,5 +181,24 @@ public class UHCScoreboard {
         int minutes = time / 60;
         int seconds = time % 60;
         return String.format("%02d:%02d", minutes, seconds);
+    }
+
+    private String getRole(Player player) {
+        UhcPlayer uhcPlayer = playerManager.getPlayer(player);
+        UhcRole role = roleManager.getRole(uhcPlayer);
+        if(role != null) {
+            Camp camp = roleManager.getCamp(uhcPlayer);
+            String color = "§f";
+            if (camp != null) {
+                String string = config.getString("camp." + camp.getName().toLowerCase());
+                if (string != null) {
+                    color = "§" + string;
+                }
+            }
+            return color + role.getName();
+        }
+        else {
+            return "Aucun";
+        }
     }
 }
